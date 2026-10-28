@@ -42,7 +42,20 @@ async function main() {
     Object.assign(cfg, patch);
     saveConfig(patch);
   }
-  if (flags.key) setApiKey(String(flags.key));
+  if (flags.key) {
+    setApiKey(String(flags.key));
+    cfg.provider.apiKey = String(flags.key);
+  }
+
+  /* ------------------------------------------------------ самодиагностика */
+  // Ставим после разбора флагов (чтобы --model/--key применялись) и ДО запроса ключа
+  // (иначе проверка без ключа зависнет на вопросе в терминале).
+  if (flags.check) {
+    const { runCheck, renderCheck } = await import('../src/doctor.js');
+    const result = await runCheck({ cfg, api: !flags['check-fast'] });
+    console.log(renderCheck(result));
+    process.exit(result.ok ? 0 : 1);
+  }
 
   const offline = !!flags.offline;
   if (offline) cfg.provider.protocol = 'mock';
