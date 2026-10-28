@@ -144,12 +144,13 @@ function checkBrowser(cfg) {
 function checkProfile(cfg) {
   const p = profilePath(cfg);
   if (!fs.existsSync(p)) {
-    return bad('Профиль пользователя', `нет файла ${p}`, 'Заполни навыки, ставки и стиль — без них отклики будут пустыми');
+    // не поломка: агент спросит тебя сам. Но отклики будут generic — предупреждаем.
+    return ok('Профиль пользователя', `нет файла ${p}`, 'Заполни навыки, ставки и стиль — без них отклики будут пустыми');
   }
   const body = fs.readFileSync(p, 'utf8').trim();
   const size = body.length;
   if (size < 80) {
-    return bad('Профиль пользователя', `файл есть, но почти пустой (${size} символов)`, 'Заполни profile.md: навыки, ставки, портфолио, стиль');
+    return ok('Профиль пользователя', `файл есть, но почти пустой (${size} символов)`, 'Заполни profile.md: навыки, ставки, портфолио, стиль');
   }
   return ok('Профиль пользователя', `${size} символов · ${p}`);
 }
@@ -157,7 +158,9 @@ function checkProfile(cfg) {
 function checkPlaybooks(cfg) {
   const dir = playbooksDir(cfg);
   const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.md')) : [];
-  if (!files.length) return bad('Плейбуки', `в ${dir} нет .md`, 'mavis --update');
+  if (!files.length) {
+    return bad('Плейбуки', `в ${dir} нет .md`, `скопируй гайды: cp <папка mavis-cli>/playbooks/*.md ${dir}/`);
+  }
   return ok('Плейбуки', `${files.length} шт: ${files.join(' ')}`);
 }
 
