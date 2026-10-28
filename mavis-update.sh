@@ -87,13 +87,13 @@ say "  установленная копия: $TARGET"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP="$HOME/.mavis-cli/backups/$STAMP"
 mkdir -p "$BACKUP"
-for item in src bin test playbooks templates README.md package.json install.sh; do
+for item in src bin test playbooks templates README.md package.json install.sh mavis-update.sh; do
   [ -e "$TARGET/$item" ] && cp -a "$TARGET/$item" "$BACKUP/" || true
 done
 say "  бэкап старых файлов: $BACKUP"
 
 # ── 4. раскладываем (слиянием, лишние файлы не удаляем) ────────────────────
-for item in src bin test playbooks templates README.md package.json install.sh; do
+for item in src bin test playbooks templates README.md package.json install.sh mavis-update.sh; do
   [ -e "$NEW/$item" ] || continue
   if [ -d "$NEW/$item" ]; then
     mkdir -p "$TARGET/$item"
