@@ -659,6 +659,72 @@ await step('в проекте лежит mavis-update.sh — вечная точ
 
 await closeSession();
 
+/* ----------------------------------------------------- самодиагностика */
+
+console.log('\n[8] Самодиагностика (mavis --check)');
+
+await step('doctor: все пункты зелёные на рабочем окружении', async () => {
+  const { runCheck, renderCheck } = await import('../src/doctor.js');
+
+  // профиль и плейбук — чтобы их пункты тоже были зелёными
+  fs.writeFileSync(
+    cfg.profileFile,
+    '# Профиль\nСверстаю лендинг на Tilda, делаю быстро, беру от 5000 ₽, пишу коротко и по делу.\n',
+  );
+  fs.writeFileSync(path.join(cfg.playbooksDir, 'flru.md'), '# FL.ru\nгайд по площадке\n');
+
+  // локальный сервер, который отвечает с учётом контекста диалога
+  const docServer = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', (d) => (body += d));
+    req.on('end', () => {
+      const parsed = JSON.parse(body || '{}');
+      const all = JSON.stringify(parsed.messages || []);
+      const found = all.match(/Меня зовут ([^"\\,.]+)/);
+      const name = found ? found[1] : 'не знаю';
+      const text = /Как меня зовут/.test(all)
+        ? `Тебя зовут ${name}, ты делаешь лендинги на Tilda.`
+        : 'ок';
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          id: 'msg_doc',
+          type: 'message',
+          role: 'assistant',
+          model: parsed.model,
+          content: [{ type: 'text', text }],
+          stop_reason: 'end_turn',
+        }),
+      );
+    });
+  });
+  await new Promise((r) => docServer.listen(0, '127.0.0.1', r));
+  const docPort = docServer.address().port;
+  const docCfg = {
+    ...cfg,
+    provider: { ...cfg.provider, protocol: 'anthropic', baseUrl: `http://127.0.0.1:${docPort}/anthropic`, apiKey: 'test-key' },
+  };
+
+  const result = await runCheck({ cfg: docCfg, api: true });
+  const report = renderCheck(result);
+  if (!result.ok) console.log(report);
+  assert.ok(result.ok, 'диагностика нашла проблемы:\n' + report);
+  assert.match(report, /Контекст: модель помнит/, 'в отчёте нет пункта про контекст');
+  docServer.close();
+});
+
+await step('doctor: без ключа честно говорит, что ключ не найден', async () => {
+  const { runCheck } = await import('../src/doctor.js');
+  const noKey = { ...cfg, provider: { ...cfg.provider, apiKey: null } };
+  const result = await runCheck({ cfg: noKey, api: false });
+  assert.equal(result.ok, false, 'без ключа должно быть «не работает»');
+  const cfgCheck = result.checks.find((c) => c.title.includes('API-ключ'));
+  assert.ok(cfgCheck && !cfgCheck.ok, 'пункт про ключ должен быть красным');
+  assert.ok(cfgCheck.fix, 'должна быть подсказка, что делать');
+});
+
+await closeSession();
+
 /* -------------------------------------------------------------- итог */
 
 server.close();
