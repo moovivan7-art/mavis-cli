@@ -1,0 +1,19 @@
+{
+  "name": "mavis-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mavis — terminal agent for freelance work: browse platforms, read orders, talk to clients, keep the pipeline.",
+  "bin": {
+    "mavis": "bin/mavis.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "smoke": "node test/smoke.mjs"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.63.0"
+  }
+}
