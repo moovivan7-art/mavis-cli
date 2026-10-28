@@ -104,6 +104,19 @@ for item in src bin test playbooks templates README.md package.json install.sh m
 done
 say "  файлы обновлены"
 
+# ── 4.1 протокол: раскладываем один раз, свой файл не затираем ────────────
+PROTO_SRC="$NEW/templates/protocol.md"
+PROTO_DST="$HOME/.mavis-cli/protocol.md"
+if [ -f "$PROTO_SRC" ]; then
+  if [ -f "$PROTO_DST" ]; then
+    say "  протокол: твой файл на месте, не трогаю ($PROTO_DST)"
+  else
+    mkdir -p "$(dirname "$PROTO_DST")"
+    cp "$PROTO_SRC" "$PROTO_DST"
+    say "  протокол установлен: $PROTO_DST"
+  fi
+fi
+
 # ── 5. проверка ─────────────────────────────────────────────────────────────
 say ""
 say "▸ Прогоняю проверку (node test/smoke.mjs)…"
