@@ -725,6 +725,52 @@ await step('doctor: без ключа честно говорит, что клю
 
 await closeSession();
 
+/* ------------------------------- [9] Операционный протокол (подключаемый файл) */
+
+console.log('\n[9] Операционный протокол');
+
+await step('протокол из файла попадает в системный промпт', async () => {
+  const { protocolPath } = await import('../src/config.js');
+  const p = protocolPath(cfg);
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, 'ТЕСТОВЫЙ ПРОТОКОЛ: БЕРЁМ J-001 означает полный цикл.', 'utf8');
+  const sys = buildSystemPrompt(cfg);
+  assert.match(sys, /ОПЕРАЦИОННЫЙ ПРОТОКОЛ/, 'в промпте нет блока протокола');
+  assert.match(sys, /ТЕСТОВЫЙ ПРОТОКОЛ/, 'текст протокола не попал в промпт');
+  fs.rmSync(p);
+});
+
+await step('без файла протокола промпт собирается и не падает', async () => {
+  const { protocolPath } = await import('../src/config.js');
+  const p = protocolPath(cfg);
+  if (fs.existsSync(p)) fs.rmSync(p);
+  const sys = buildSystemPrompt(cfg);
+  assert.ok(sys.length > 500, 'промпт подозрительно короткий');
+  assert.doesNotMatch(sys, /ТЕСТОВЫЙ ПРОТОКОЛ/, 'протокол не должен подмешиваться');
+});
+
+await step('doctor видит протокол и предлагает его поставить', async () => {
+  const { runCheck } = await import('../src/doctor.js');
+  const { protocolPath } = await import('../src/config.js');
+  const p = protocolPath(cfg);
+  if (fs.existsSync(p)) fs.rmSync(p);
+  const result = await runCheck({ cfg, api: false });
+  const check = result.checks.find((c) => c.title.includes('Операционный протокол'));
+  assert.ok(check, 'в диагностике нет пункта про протокол');
+  assert.ok(check.fix && /protocol\.md/.test(check.fix), 'нет подсказки, куда положить файл');
+});
+
+await step('в репозитории лежит эталонный протокол', async () => {
+  const here = path.dirname(new URL(import.meta.url).pathname);
+  const proto = path.join(here, '..', 'templates', 'protocol.md');
+  assert.ok(fs.existsSync(proto), 'нет templates/protocol.md');
+  const body = fs.readFileSync(proto, 'utf8');
+  assert.ok(body.length > 5000, `протокол слишком короткий: ${body.length}`);
+  for (const marker of ['БЕРЁМ J-001', 'СТАТУС', 'ОТКЛИК J-001', 'являются согласием']) {
+    assert.ok(body.includes(marker), `в протоколе нет маркера «${marker}»`);
+  }
+});
+
 /* -------------------------------------------------------------- итог */
 
 server.close();
