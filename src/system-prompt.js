@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { profilePath } from './config.js';
+import { profilePath, protocolPath } from './config.js';
 import { truncate } from './util.js';
 
 const BASE = `Ты — Mavis, персональный агент по фрилансу. Ты работаешь в терминале на компьютере пользователя
@@ -42,6 +42,18 @@ const BASE = `Ты — Mavis, персональный агент по фрил�
 export function buildSystemPrompt(cfg, { role } = {}) {
   const parts = [BASE];
   if (role) parts.push(`\nТВОЯ РОЛЬ В ЭТОМ ЗАХОДЕ: ${role}`);
+
+  // Операционный протокол пользователя. Файл можно править — агент подхватит при следующем запуске.
+  const proto = protocolPath(cfg);
+  if (fs.existsSync(proto)) {
+    const text = fs.readFileSync(proto, 'utf8').trim();
+    if (text) {
+      parts.push(
+        '\n\n=== ОПЕРАЦИОННЫЙ ПРОТОКОЛ (source of truth, выше не отменяй) ===\n' +
+          truncate(text, 16000),
+      );
+    }
+  }
 
   const p = profilePath(cfg);
   if (fs.existsSync(p)) {
