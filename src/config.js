@@ -34,6 +34,7 @@ export const DEFAULT_CONFIG = {
   },
   playbooksDir: '~/.mavis-cli/playbooks',
   profileFile: '~/.mavis-cli/profile.md',
+  protocolFile: '~/.mavis-cli/protocol.md',
 };
 
 function deepMerge(base, override) {
@@ -95,4 +96,8 @@ export function playbooksDir(cfg) {
 
 export function profilePath(cfg) {
   return expandHome(cfg.profileFile);
+}
+
+export function protocolPath(cfg) {
+  return expandHome(cfg.protocolFile);
 }
