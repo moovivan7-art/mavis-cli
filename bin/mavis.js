@@ -47,20 +47,8 @@ async function main() {
     cfg.provider.apiKey = String(flags.key);
   }
 
-  /* ------------------------------------------------------ самодиагностика */
-  // Ставим после разбора флагов (чтобы --model/--key применялись) и ДО запроса ключа
-  // (иначе проверка без ключа зависнет на вопросе в терминале).
-  if (flags.check) {
-    const { runCheck, renderCheck } = await import('../src/doctor.js');
-    const result = await runCheck({ cfg, api: !flags['check-fast'] });
-    console.log(renderCheck(result));
-    process.exit(result.ok ? 0 : 1);
-  }
-
-  const offline = !!flags.offline;
-  if (offline) cfg.provider.protocol = 'mock';
-
   /* --------------------------------------------------- first-run assets */
+  // Идёт ДО самодиагностики: плейбуки и профиль должны быть на месте, когда их проверяют.
   workspaceDir(cfg);
   const pbDir = playbooksDir(cfg);
   const srcPlaybooks = path.join(PKG_ROOT, 'playbooks');
@@ -78,6 +66,19 @@ async function main() {
       console.log(c.gray(`Создан профиль: ${prof} — заполни его, чтобы отклики были твоими.`));
     }
   }
+
+  /* ------------------------------------------------------ самодиагностика */
+  // Ставим после разбора флагов (чтобы --model/--key применялись) и ДО запроса ключа
+  // (иначе проверка без ключа зависнет на вопросе в терминале).
+  if (flags.check) {
+    const { runCheck, renderCheck } = await import('../src/doctor.js');
+    const result = await runCheck({ cfg, api: !flags['check-fast'] });
+    console.log(renderCheck(result));
+    process.exit(result.ok ? 0 : 1);
+  }
+
+  const offline = !!flags.offline;
+  if (offline) cfg.provider.protocol = 'mock';
 
   /* --------------------------------------------------------------- key */
   if (!offline && !cfg.provider.apiKey) {
