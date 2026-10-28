@@ -61,11 +61,21 @@ if [ -z "$TARGET" ] && command -v mavis >/dev/null 2>&1; then
     TARGET="$CAND"
   fi
 fi
+
+# Если мы запущены прямо из только что распакованного архива — это первый запуск,
+# а не обновление. Нечаянно «обновить» временную папку нельзя: говорим честно.
+SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -z "$TARGET" ]; then
-  SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  [ -f "$SELF_DIR/package.json" ] && TARGET="$SELF_DIR"
-fi
-if [ -z "$TARGET" ]; then
+  if [ -f "$SELF_DIR/package.json" ]; then
+    say ""
+    say "▸ mavis-cli ещё не установлен — но код уже у тебя в руках."
+    say "  Установи его отсюда:"
+    say ""
+    say "      cd $SELF_DIR && npm i -g . && npx playwright install chromium"
+    say ""
+    say "  После этого обновления будут одной командой: mavis --update"
+    exit 0
+  fi
   say ""
   say "✖ Не нашёл, где установлен mavis-cli. Скажи путь:"
   say "      bash mavis-update.sh ~/путь/к/mavis-cli"
