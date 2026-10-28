@@ -44,7 +44,10 @@ echo "     Чтобы войти вместе с ним — запусти:  mav
 echo
 echo "  2) Заполни профиль:  ~/.mavis-cli/profile.md   (навыки, ставки, стиль)"
 echo
-echo "  3) Первый запуск попросит API-ключ MiniMax:"
+echo "  3) Операционный протокол (если ещё не установлен):"
+echo "        cp <папка mavis-cli>/templates/protocol.md ~/.mavis-cli/protocol.md"
+echo
+echo "  4) Первый запуск попросит API-ключ MiniMax:"
 echo "        mavis"
 echo "     Ключ: https://platform.minimax.io → API Keys"
 echo
