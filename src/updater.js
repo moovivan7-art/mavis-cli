@@ -21,7 +21,17 @@ export const REPO = process.env.MAVIS_REPO || 'moovivan7-art/mavis-cli';
 export const RELEASE_URL =
   process.env.MAVIS_RELEASE_URL || `https://github.com/${REPO}/archive/refs/heads/main.tar.gz`;
 
-const ITEMS = ['src', 'bin', 'test', 'playbooks', 'templates', 'README.md', 'package.json', 'install.sh'];
+const ITEMS = [
+  'src',
+  'bin',
+  'test',
+  'playbooks',
+  'templates',
+  'README.md',
+  'package.json',
+  'install.sh',
+  'mavis-update.sh',
+];
 
 /** Корень установленного пакета (родитель src/). */
 export function packageRoot() {
