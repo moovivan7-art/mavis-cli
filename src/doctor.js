@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { configPath, profilePath } from './config.js';
+import { configPath, profilePath, protocolPath } from './config.js';
 import { Agent } from './agent.js';
 import { createProvider } from './providers/index.js';
 import { buildTools, ALL_TOOLS } from './tools/index.js';
@@ -26,7 +26,7 @@ import { maskKey } from './config.js';
 import { loadSession, saveSession, listJobs, listDrafts, memoryAll } from './store.js';
 import { playbooksDir } from './config.js';
 
-const ok = (title, detail = '') => ({ title, ok: true, detail });
+const ok = (title, detail = '', fix = '') => ({ title, ok: true, detail, fix });
 const bad = (title, detail = '', fix = '') => ({ title, ok: false, detail, fix });
 
 /** Живой запрос к модели: работает ли ключ и отвечает ли модель. */
@@ -155,8 +155,23 @@ function checkProfile(cfg) {
   return ok('Профиль пользователя', `${size} символов · ${p}`);
 }
 
-function checkPlaybooks(cfg) {
-  const dir = playbooksDir(cfg);
+function checkProtocol(cfg) {
+  const p = protocolPath(cfg);
+  if (!fs.existsSync(p)) {
+    return ok(
+      'Операционный протокол',
+      `нет файла ${p}`,
+      'Скопируй: cp <папка mavis-cli>/templates/protocol.md ~/.mavis-cli/protocol.md',
+    );
+  }
+  const size = fs.readFileSync(p, 'utf8').trim().length;
+  if (size < 400) {
+    return ok('Операционный протокол', `файл есть, но почти пустой (${size} символов)`, 'Скопируй полный templates/protocol.md');
+  }
+  return ok('Операционный протокол', `${size} символов · ${p}`);
+}
+
+function checkPlaybooks(cfg) {  const dir = playbooksDir(cfg);
   const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.md')) : [];
   if (!files.length) {
     return bad('Плейбуки', `в ${dir} нет .md`, `скопируй гайды: cp <папка mavis-cli>/playbooks/*.md ${dir}/`);
@@ -221,6 +236,7 @@ export async function runCheck({ cfg, api = true } = {}) {
   checks.push(checkTools());
   checks.push(checkBrowser(cfg));
   checks.push(checkProfile(cfg));
+  checks.push(checkProtocol(cfg));
   checks.push(checkPlaybooks(cfg));
   checks.push(checkSession());
   checks.push(checkPipeline());
